@@ -1,0 +1,70 @@
+-- list to hold scripts
+local scripts = {}
+
+-- function to add a script
+local function addScript(scriptFunc)
+table.insert(scripts, coroutine.create(scriptFunc))
+end
+
+-- function to run all scripts
+local function runAllScripts()
+local function execute()
+local active = false
+for _, co in ipairs(scripts) do
+if coroutine.status(co) ~= "dead" then
+active = true
+local success, message = coroutine.resume(co)
+if not success then print("Error: " .. message) end
+end
+end
+if active then
+game:GetService("RunService").Heartbeat:Wait()
+execute()
+else
+print("All scripts executed.")
+end
+end
+execute()
+end
+
+-- ADD YOUR SCRIPTS BELOW THIS LINE
+
+-- Example Script 1
+addScript(function()
+print("Executing Script 1")
+-- Your actual script code here
+coroutine.yield() -- allow other scripts to run
+end)
+
+-- Example Script 2
+addScript(function()
+print("Executing Script 2")
+-- Your actual script code here
+coroutine.yield() -- allow other scripts to run
+end)
+
+-- Example Script 3
+addScript(function()
+print("Executing Script 3")
+-- Your actual script code here
+coroutine.yield() -- allow other scripts to run
+end)
+
+-- Example Script 4
+addScript(function()
+print("Executing Script 4")
+-- Your actual script code here
+coroutine.yield() -- allow other scripts to run
+end)
+
+-- Example Script 5
+addScript(function()
+print("Executing Script 5")
+-- Your actual script code here
+coroutine.yield() -- allow other scripts to run
+end)
+
+-- YOUR SCRIPTS END HERE
+
+-- Run all scripts
+runAllScripts()
