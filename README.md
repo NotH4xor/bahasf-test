@@ -80,3 +80,24 @@ runAllScripts()
 
 1. **find the section** labeled **"ADD YOUR SCRIPTS BELOW THIS LINE"**.
 2. **add your scripts** using the `addScript` function with an optional delay in seconds.
+### example to add a new script with a delay
+
+simply add your script content and specify the delay time:
+
+```lua
+-- Script with a 5 second delay
+addScript(function()
+print("Executing My Delayed Script")
+-- Your actual script code here
+coroutine.yield() -- allow other scripts to run
+end, 5)
+```
+
+### benefits
+
+1. **minimalistic**: simple and easy to understand.
+2. **concurrent execution**: allows multiple scripts to run concurrently.
+3. **delayed execution**: provides control over when each script starts.
+4. **executor compatibility**: designed for client-side execution in Roblox.
+
+This template ensures that your scripts run efficiently and concurrently, with the added ability to specify delays in their execution.
