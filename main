@@ -27,44 +27,490 @@ end
 execute()
 end
 
--- ADD YOUR SCRIPTS BELOW THIS LINE
+-- ////////////////////////////////// DONT TOUCH ON TOP //////////////////////////////////
 
--- Example Script 1
+-- ADDED Anti-Admins
 addScript(function()
-print("Executing Script 1")
--- Your actual script code here
+print("Executing Anti-Admins")
+-- List of admin user IDs
+local adminIDs = {
+30888938, -- ZCOLINZ (The Owner)
+24291721, -- yerja
+856955432, -- Ben (Dev Role in group )
+28715944, -- Guppy (Dev Role in group )
+295255058, -- Finn ( Dev Role in group )
+336666561 -- ZNILOCZ ( Owners Alt )
+}
+
+local adminDict = {}
+for _, id in ipairs(adminIDs) do
+adminDict[id] = true
+end
+
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+local hasChecked = false
+
+local function detectAndKick()
+if hasChecked then return end
+for _, player in pairs(Players:GetPlayers()) do
+if adminDict[player.UserId] then
+localPlayer:Kick("Admin Joined")
+hasChecked = true
+return
+end
+end
+end
+
+detectAndKick()
+
+Players.PlayerAdded:Connect(function(player)
+if adminDict[player.UserId] then
+localPlayer:Kick("Admin Joined")
+hasChecked = true
+end
+end)
+
+RunService.Heartbeat:Connect(function()
+if not hasChecked then
+detectAndKick()
+end
+end)
+coroutine.yield()
+end)
+
+-- ADDED FixedCrashSword
+addScript(function()
+print("Executing FixedCrashSword")
+local player = game:GetService("Players").LocalPlayer
+
+local function equipTool()
+    wait(1)
+    local tool = player.Backpack:FindFirstChild("3 Sword")
+    if tool then player.Character.Humanoid:EquipTool(tool) end
+end
+
+player.CharacterAdded:Connect(equipTool)
+if player.Character then equipTool() end
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    local tool = player.Character and player.Character:FindFirstChild("3 Sword")
+    if tool and tool:FindFirstChild("Handle") and player.Character.Humanoid.Health > 0 then
+        for _, target in ipairs(game:GetService("Players"):GetPlayers()) do
+            if target ~= player and target.Character then
+                for _, part in ipairs(target.Character:GetChildren()) do
+                    if part:IsA("BasePart") then
+                        pcall(firetouchinterest, tool.Handle, part, 1)
+                        pcall(firetouchinterest, tool.Handle, part, 0)
+                    end
+                end
+            end
+        end
+    end
+end)
 coroutine.yield() -- allow other scripts to run
 end)
 
--- Example Script 2
+-- ADDED AutoSpawn
 addScript(function()
-print("Executing Script 2")
--- Your actual script code here
+print("Executing AutoSpawn")
+-- function to perform the actions
+local function performActions()
+    local replicatedStorage = game:GetService("ReplicatedStorage")
+    replicatedStorage.Remotes.InitialSpawn:FireServer()
+    replicatedStorage.Remotes.DeleteHologram:FireServer()
+end
+
+-- automatically call the function
+performActions()
 coroutine.yield() -- allow other scripts to run
 end)
 
--- Example Script 3
+-- ADDED Anti-Bed
 addScript(function()
-print("Executing Script 3")
--- Your actual script code here
+print("Executing Anti-Bed")
+
+local RunService = game:GetService("RunService")
+
+local LocalBin = workspace.LocalBin
+
+local objectNames = {"Bed", "Dining Chair", "Captain's Chair", "Chair - Tall", "Chair - Short", "Throne - Blue", "Medieval Desk Chair - Blue", "Couch"}
+
+local function deleteObjects()
+   if LocalBin then
+      for _, objectName in pairs(objectNames) do
+         local object = LocalBin:FindFirstChild(objectName)
+         if object then
+            object:Destroy()
+         else
+         end
+      end
+   end
+end
+
+local function onStep()
+   deleteObjects()
+end
+
+RunService.Stepped:Connect(onStep)
+coroutine.yield()
+end)
+
+-- ADDED Server Hop When No Players Left
+addScript(function()
+print("Executing 0PlayerLeftHop")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+local order = "Desc"
+
+local function ServerHop()
+local url = string.format("https://games.roblox.com/v1/games/%s/servers/Public?sortOrder=%s&limit=100", game.PlaceId, order)
+local Server = nil
+
+repeat
+local success, result = pcall(game.HttpGet, game, url)
+if success then
+local servers = HttpService:JSONDecode(result).data
+for _, v in ipairs(servers) do
+if v.maxPlayers > v.playing and v.id ~= game.JobId then
+Server = v
+break
+end
+end
+if Server then
+TeleportService:TeleportToPlaceInstance(game.PlaceId, Server.id)
+return
+end
+url = string.format("https://games.roblox.com/v1/games/%s/servers/Public?sortOrder=%s&limit=100&cursor=%s", game.PlaceId, order, servers.nextPageCursor or "")
+end
+wait(2)
+until false
+end
+
+while true do
+if #Players:GetPlayers() == 1 then
+ServerHop()
+end
+wait(1)
+end
 coroutine.yield() -- allow other scripts to run
 end)
 
--- Example Script 4
+-- ADDED Anti-Votekick
 addScript(function()
-print("Executing Script 4")
--- Your actual script code here
+print("Executing Anti-Votekick")
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local GuiService = game:GetService("GuiService")
+
+local PlaceId = game.PlaceId
+local JobId = game.JobId
+
+local function rejoin()
+    if #Players:GetPlayers() <= 1 then
+        Players.LocalPlayer:Kick("\nRejoining...")
+        wait(0.5)
+        TeleportService:Teleport(PlaceId, Players.LocalPlayer)
+    else
+        TeleportService:TeleportToPlaceInstance(PlaceId, JobId, Players.LocalPlayer)
+    end
+end
+
+_G.rejoinCommand = function()
+    rejoin()
+end
+
+local function enableAutoRejoin()
+    GuiService.ErrorMessageChanged:Connect(function()
+        if GuiService:GetErrorMessage() ~= "" then
+            rejoin()
+        end
+    end)
+end
+
+enableAutoRejoin()
+
+if _G.autoExecuteEnabled == nil then
+    _G.autoExecuteEnabled = true
+    enableAutoRejoin()
+end
+
+if typeof(notify) == "function" then
+    notify("Script Loaded", "Auto rejoin enabled.")
+end
 coroutine.yield() -- allow other scripts to run
 end)
 
--- Example Script 5
+-- ADDED BasePlateREMOVAL
 addScript(function()
-print("Executing Script 5")
--- Your actual script code here
+print("Executing BasePlateRemoval")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Plates = workspace:FindFirstChild("Plates")
+
+-- Add a delay to ensure the game has assigned the owner to the plates
+task.wait(2)
+
+if Plates then
+for _, Plate in ipairs(Plates:GetChildren()) do
+-- Check if the Plate has an "Owner"
+if Plate:FindFirstChild("Owner") then
+-- If the Plate's owner is not the local player, destroy the Plate
+if tostring(Plate.Owner.Value) ~= LocalPlayer.Name then
+Plate:Destroy()
+end
+end
+end
+end
 coroutine.yield() -- allow other scripts to run
 end)
 
--- YOUR SCRIPTS END HERE
+-- ADDED Void-TP ALL
+addScript(function()
+print("Executing Void-TP ALL")
+if _G.ScriptAlreadyRan then
+    print("Script already ran, exiting...")
+    return
+end
+_G.ScriptAlreadyRan = true
+
+print("Script is running for the first time...")
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local LPlayer, Plates, StampAsset = Players.LocalPlayer, Workspace.Plates, ReplicatedStorage.Remotes.StampAsset
+
+local LPlate = nil
+for _, plate in ipairs(Plates:GetChildren()) do
+    if plate.Owner.Value == LPlayer then
+        LPlate = plate.Plate
+        break
+    end
+end
+
+local Module = {}
+
+function Module.Kill(Player)
+    local target = Player:IsA("Player") and Player.Character and Player.Character.PrimaryPart or Player
+    if target then
+        StampAsset:InvokeServer(41324885, LPlate.CFrame - Vector3.new(0, 9e9, 0), "{}", { target }, 0)
+    end
+end
+
+local function isFriend(player)
+    return LPlayer:IsFriendsWith(player.UserId)
+end
+
+local function monitorPlayer(player)
+    if player ~= LPlayer and not isFriend(player) then
+        player.CharacterAdded:Connect(function(character)
+            character:WaitForChild("HumanoidRootPart")
+            Module.Kill(character.PrimaryPart)
+        end)
+    end
+end
+
+Players.PlayerAdded:Connect(monitorPlayer)
+
+for _, player in ipairs(Players:GetPlayers()) do
+    monitorPlayer(player)
+end
+
+task.spawn(function()
+    while true do
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LPlayer and not isFriend(player) then
+                local character = player.Character
+                if character and character.PrimaryPart then
+                    Module.Kill(character.PrimaryPart)
+                end
+            end
+        end
+        task.wait(0.1)
+    end
+end)
+
+print("Script execution complete.")
+coroutine.yield() -- allow other scripts to run
+end)
+
+-- ADDED AgreeButtonSkip
+addScript(function()
+print("AgreeButtonSkip")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local gui = player:WaitForChild("PlayerGui"):WaitForChild("MainScreen"):WaitForChild("Frame"):WaitForChild("Rules")
+local button = gui:WaitForChild("AgreeButton")
+
+local function clickAgreeButton()
+    if not button then
+        warn("AgreeButton not found!")
+        return
+    end
+
+    local clickFunctionConnections = getconnections(button.MouseButton1Click)
+    for _, connection in ipairs(clickFunctionConnections) do
+        if connection.Function then
+            coroutine.wrap(connection.Function)()
+        end
+    end
+end
+
+coroutine.wrap(clickAgreeButton)()
+coroutine.yield()
+end, 1)
+
+-- ADDED Anti-Friend SERVERHOP
+addScript(function()
+print("Executing Anti-Friend (ServerHop)")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local order = "Desc"  -- you can change this to "Asc" for minimum players
+
+local function ServerHop()
+local Servers = {}
+local url = string.format(
+"https://games.roblox.com/v1/games/%s/servers/Public?sortOrder=%s&limit=100",
+game.PlaceId,
+order
+)
+local starting = tick()
+local Server = nil
+
+repeat
+local success, result = pcall(function()
+return game:HttpGet(url)
+end)
+if not success then
+wait(2)
+continue
+end
+local decoded = HttpService:JSONDecode(result)
+if #decoded.data ~= 0 then
+Servers = decoded.data
+for _, v in pairs(Servers) do
+if v.maxPlayers and v.playing and v.maxPlayers > v.playing and v.id ~= game.JobId then
+Server = v
+break
+end
+end
+if Server then
+break
+end
+end
+url = string.format(
+"https://games.roblox.com/v1/games/%s/servers/Public?sortOrder=%s&limit=100&cursor=%s",
+game.PlaceId,
+order,
+decoded.nextPageCursor or ""
+)
+until tick() - starting >= 600
+
+if Server then
+TeleportService:TeleportToPlaceInstance(game.PlaceId, Server.id)
+end
+end
+
+local function CheckForFriends()
+for _, player in pairs(Players:GetPlayers()) do
+if player:IsFriendsWith(LocalPlayer.UserId) then
+ServerHop()
+end
+end
+end
+
+Players.PlayerAdded:Connect(CheckForFriends)
+Players.PlayerRemoving:Connect(CheckForFriends)
+
+CheckForFriends()
+
+while true do
+wait(1)
+end
+coroutine.yield()
+end)
+
+-- ADDED LASERDOOR KILL
+addScript(function()
+print("Executing LASERDOOR KILL")
+local player = game:GetService("Players").LocalPlayer
+local Players = game:GetService("Players")
+local Plates = workspace:FindFirstChild("Plates")
+local firedPlayers = {}
+
+local function getAssignedPlate()
+for _, plate in ipairs(Plates:GetChildren()) do
+if plate:FindFirstChild("Owner") and tostring(plate.Owner.Value) == player.Name then
+return plate
+end
+end
+return nil
+end
+
+local function fireInterests()
+while player.Character and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 do
+local plate = getAssignedPlate()
+if plate then
+local activeParts = plate:FindFirstChild("ActiveParts")
+local hostileObject = activeParts and activeParts:FindFirstChild("Friend Only Door - Hostile")
+local friendOnlyDoorHostile = hostileObject and hostileObject:FindFirstChild("FriendOnlyDoorHostile")
+
+if friendOnlyDoorHostile then
+for _, child in ipairs(friendOnlyDoorHostile:GetChildren()) do
+if child:IsA("BasePart") and child:FindFirstChild("TouchInterest") then
+local laser = child
+for _, target in ipairs(Players:GetPlayers()) do
+local targetChar = target.Character
+local targetHumanoid = targetChar and targetChar:FindFirstChildWhichIsA("Humanoid")
+
+if target ~= player and targetHumanoid and targetHumanoid.Health > 0 and Players:FindFirstChild(target.Name) then
+for _, part in ipairs(targetChar:GetChildren()) do
+if part:IsA("BasePart") then
+pcall(firetouchinterest, part, laser, 1)
+pcall(firetouchinterest, part, laser, 0)
+end
+end
+firedPlayers[target.Name] = true
+else
+firedPlayers[target.Name] = nil
+end
+end
+end
+end
+end
+end
+wait(0.1)
+end
+firedPlayers = {}
+end
+
+local function onCharacterAdded(character)
+local humanoid = character:WaitForChild("Humanoid")
+humanoid.Died:Connect(function()
+firedPlayers = {}
+end)
+fireInterests()
+end
+
+player.CharacterAdded:Connect(onCharacterAdded)
+if player.Character then
+onCharacterAdded(player.Character)
+end
+
+Players.PlayerRemoving:Connect(function(target)
+firedPlayers[target.Name] = nil
+end)
+coroutine.yield()
+end)
+
+-- THE END IS HERE
 
 -- Run all scripts
 runAllScripts()
