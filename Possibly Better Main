@@ -364,79 +364,6 @@ coroutine.wrap(clickAgreeButton)()
 coroutine.yield()
 end, 1)
 
--- ADDED Anti-Friend SERVERHOP
-addScript(function()
-print("Executing Anti-Friend (ServerHop)")
-local HttpService = game:GetService("HttpService")
-local TeleportService = game:GetService("TeleportService")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
-local order = "Desc"  -- you can change this to "Asc" for minimum players
-
-local function ServerHop()
-local Servers = {}
-local url = string.format(
-"https://games.roblox.com/v1/games/%s/servers/Public?sortOrder=%s&limit=100",
-game.PlaceId,
-order
-)
-local starting = tick()
-local Server = nil
-
-repeat
-local success, result = pcall(function()
-return game:HttpGet(url)
-end)
-if not success then
-wait(2)
-continue
-end
-local decoded = HttpService:JSONDecode(result)
-if #decoded.data ~= 0 then
-Servers = decoded.data
-for _, v in pairs(Servers) do
-if v.maxPlayers and v.playing and v.maxPlayers > v.playing and v.id ~= game.JobId then
-Server = v
-break
-end
-end
-if Server then
-break
-end
-end
-url = string.format(
-"https://games.roblox.com/v1/games/%s/servers/Public?sortOrder=%s&limit=100&cursor=%s",
-game.PlaceId,
-order,
-decoded.nextPageCursor or ""
-)
-until tick() - starting >= 600
-
-if Server then
-TeleportService:TeleportToPlaceInstance(game.PlaceId, Server.id)
-end
-end
-
-local function CheckForFriends()
-for _, player in pairs(Players:GetPlayers()) do
-if player:IsFriendsWith(LocalPlayer.UserId) then
-ServerHop()
-end
-end
-end
-
-Players.PlayerAdded:Connect(CheckForFriends)
-Players.PlayerRemoving:Connect(CheckForFriends)
-
-CheckForFriends()
-
-while true do
-wait(1)
-end
-coroutine.yield()
-end)
-
 -- ADDED LASERDOOR KILL
 addScript(function()
 print("Executing LASERDOOR KILL")
@@ -586,6 +513,7 @@ coroutine.yield()
 end)
 
 
+-- Removed ANTI-FRIEND SERVERHOP
 
 -- THE END IS HERE
 
